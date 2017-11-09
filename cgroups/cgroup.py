@@ -17,6 +17,7 @@ HIERARCHIES = [
 ]
 MEMORY_DEFAULT = -1
 CPU_DEFAULT = 1024
+CFS_DEFAULT = 100000
 
 
 class Cgroup(object):
@@ -29,7 +30,7 @@ class Cgroup(object):
             self.user = getpass.getuser()
         # Get hierarchies
         if hierarchies == 'all':
-            hierachies = HIERARCHIES
+            hierarchies = HIERARCHIES
         self.hierarchies = [h for h in hierachies if h in HIERARCHIES]
         # Get user cgroups
         self.user_cgroups = {}
@@ -122,13 +123,29 @@ class Cgroup(object):
                     value = int(round(CPU_DEFAULT * limit))
         return value
 
+    def _format_cfs(self, value=None):
+        if value is None:
+            value = CFS_DEFAULT
+        else:
+            try:
+                value = int(value)
+            except ValueError:
+                raise CgroupsException('value must be convertible to an int')
+            else:
+                if (value >= int(1000) and value <= int(1000000)) or value==int(-1):
+                    value = int(value)
+                else:
+                    raise CgroupsException('value must be between 1000us and 1000000us or -1 for no restriction')
+
+        return value
+
 
     def set_cpu_limit(self, limit=None):
         if 'cpu' in self.cgroups:
             value = self._format_cpu_value(limit)
             cpu_shares_file = self._get_cgroup_file('cpu', 'cpu.shares')
             with open(cpu_shares_file, 'w+') as f:
-                f.write('%s\n' % value)
+                f.write('%s\n' %value)
         else:
             raise CgroupsException(
                 'CPU hierarchy not available in this cgroup')
@@ -143,6 +160,49 @@ class Cgroup(object):
                 return value
         else:
             return None
+
+    def set_cfs_period_us(self, period=100000):
+        '''specifies a period of time in microseconds µs for how regularly a cgroup's access to CPU resources should be reallocated'''
+        if 'cpu' in self.cgroups:
+            value = self._format_cfs(period)
+            cfs_period_file = self._get_cgroup_file('cpu', 'cpu.cfs_period_us')
+            with open(cfs_period_file, 'w+') as f:
+                f.write('%s\n' %value)
+        else:
+            raise CgroupsException(
+                'CPU hierarchy not available in this cgroup')
+    @property
+    def cfs_period_us(self):
+        if 'cpu' in self.cgroups:
+            cfs_period_file = self._get_cgroup_file('cpu', 'cpu.cfs_period_us')
+            with open(cfs_period_file, 'r+') as f:
+                value = int(f.read().split('\n')[0])
+                return value
+        else:
+            return None
+
+    def set_cfs_quota_us(self, quota=-1):
+        '''cpu.cfs_quota_us = [1000us - 1000000us]'''
+        if 'cpu' in self.cgroups:
+            value = self._format_cfs(quota)
+            cfs_quota_file = self._get_cgroup_file('cpu', 'cpu.cfs_quota_us')
+            with open(cfs_quota_file, 'w+') as f:
+                print(type(value))
+                f.write('%s\n' %value)
+        else:
+            raise CgroupsException(
+                'CPU hierarchy not available in this cgroup')
+
+    @property
+    def cfs_quota_us(self):
+        if 'cpu' in self.cgroups:
+            cfs_quota_file = self._get_cgroup_file('cpu', 'cpu.cfs_quota_us')
+            with open(cfs_quota_file, 'r+') as f:
+                value = int(f.read().split('\n')[0])
+                return value
+        else:
+            return None
+
 
     # MEMORY
 
