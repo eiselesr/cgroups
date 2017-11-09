@@ -31,7 +31,7 @@ class Cgroup(object):
         # Get hierarchies
         if hierarchies == 'all':
             hierarchies = HIERARCHIES
-        self.hierarchies = [h for h in hierachies if h in HIERARCHIES]
+        self.hierarchies = [h for h in hierarchies if h in HIERARCHIES]
         # Get user cgroups
         self.user_cgroups = {}
         system_hierarchies = os.listdir(BASE_CGROUPS)
