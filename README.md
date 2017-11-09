@@ -49,9 +49,13 @@ cg.add(27033)
 
 
 ## Installation
-
+I haven't put these changes on pypi so browse to directory containing setup.py
 ```bash
-pip install cgroups
+<install directory>$ sudo pip3 install -e .
+```
+if you've made changes to the library run this for them to take effect. 
+```bash
+<install directory>$ sudo pip3 install --upgrade -e .
 ```
 
 
